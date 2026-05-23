@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoloFacts — голографический портал</title>
+    <link rel="icon" type="image/jpg" href="icon-no-bg-preview (carve.photos).png">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Orbitron', 'Rajdhani', 'Segoe UI', monospace;
+            background: radial-gradient(circle at 20% 30%, #0a0a1a, #020108);
+            color: #cfc4ff;
+            overflow-x: hidden;
+        }
+        /* голограмма — полноэкранный блок, не фиксированный */
+        .hero {
+            width: 100%;
+            height: 100vh;
+            background: radial-gradient(circle at center, #0f0a1f, #02000a);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+        /* Шар */
+        .holo-sphere {
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            position: relative;
+            background: radial-gradient(circle at 30% 30%, #e0c0ff 0%, #b87eff 30%, #7a3aff 60%, #3a0ca3 100%);
+            box-shadow: 0 0 80px #a55eff, 0 0 150px #5e2aff, inset 0 0 40px rgba(255,200,255,0.7), inset -20px -20px 40px rgba(0,0,0,0.5), inset 20px 20px 40px rgba(255,255,255,0.4);
+            margin-bottom: 2rem;
+            backdrop-filter: blur(2px);
+        }
+        .holo-sphere::after {
+            content: '';
+            position: absolute;
+            top: 10%;
+            left: 15%;
+            width: 35%;
+            height: 35%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.4) 40%, rgba(255,255,255,0) 80%);
+            filter: blur(2px);
+            pointer-events: none;
+        }
+        .holo-sphere::before {
+            content: '';
+            position: absolute;
+            bottom: -25px;
+            left: 10%;
+            width: 80%;
+            height: 25px;
+            border-radius: 50%;
+            background: rgba(100,50,180,0.6);
+            filter: blur(15px);
+            z-index: -1;
+        }
+        /* кольца */
+        .holo-ring { position: absolute; width: 450px; height: 450px; border: 2px solid rgba(170,100,255,0.6); border-radius: 50%; animation: rotateRing 10s linear infinite; box-shadow: 0 0 15px #b877ff, inset 0 0 8px violet; }
+        .holo-ring2 { width: 550px; height: 550px; border: 1.5px dashed rgba(150,80,255,0.5); animation: rotateRing 14s linear infinite reverse; }
+        .holo-ring3 { width: 350px; height: 350px; border: 2px solid rgba(200,120,255,0.5); animation: rotateRing 7s linear infinite; }
+        @keyframes rotateRing { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .holo-text {
+            font-size: 2.2rem; letter-spacing: 10px; color: #e0aaff;
+            text-shadow: 0 0 15px #b05eff,0 0 30px #6d2eff,0 0 50px #3f0ca0;
+            animation: flickerPurple 1.8s infinite;
+        }
+        @keyframes flickerPurple { 0% { opacity:0.7; text-shadow:0 0 5px #bf77ff; } 50% { opacity:1; text-shadow:0 0 25px #e5aaff,0 0 40px #9d4eff; } 100% { opacity:0.9; text-shadow:0 0 15px #c57eff; } }
+        .hero h4 {
+            margin-top: 3rem;
+            color: #b877ff;
+            font-size: 1rem;
+            letter-spacing: 4px;
+            animation: bounce 2s infinite;
+            font-family: inherit;
+        }
+        @keyframes bounce {
+            0%,100% { transform: translateY(0); opacity: 0.5; }
+            50% { transform: translateY(10px); opacity: 1; }
+        }
+        /* === ЛЕТАЮЩИЕ ЧАСТИЦЫ (видны на всём сайте) === */
+        .particles {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1001;
+        }
+        .particle {
+            position: absolute;
+            background: #c58aff;
+            border-radius: 50%;
+            filter: blur(3px);
+            opacity: 0.5;
+            animation: floatParticle 6s infinite alternate;
+        }
+        @keyframes floatParticle {
+            0% { transform: translateY(0px) scale(0.8); opacity:0.3; background:#b56eff; }
+            100% { transform: translateY(-50px) scale(1.4); opacity:0.9; background:#e7b0ff; }
+        }
+
+        /* общие стили для всех блоков контента (без анимаций появления) */
+        .content-block {
+            position: relative;
+            z-index: 10;
+            padding: 4rem 2rem;
+            border-bottom: 1px solid rgba(170,100,255,0.2);
+        }
+        /* историческая справка – центрированный текст */
+        .history-text {
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .history-text h2 { font-size: 2.2rem; margin-bottom: 1.5rem; font-weight: 600; }
+        .history-text p { font-size: 1.2rem; line-height: 1.6; margin-bottom: 1rem; }
+
+        /* контейнер для фактов (с рамкой) */
+        .fact-container {
+            max-width: 1200px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 3rem;
+            background: rgba(20,10,40,0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 48px;
+            padding: 2rem;
+            border: 1px solid rgba(170,100,255,0.3);
+            transition: 0.3s;
+            margin: 0 auto;
+        }
+        .fact-container:hover { border-color: #b877ff; box-shadow: 0 0 40px rgba(135,70,255,0.3); }
+
+        /* для блоков примеров (без рамки) с чередованием */
+        .plain-container {
+            max-width: 1200px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 3rem;
+            padding: 1rem;
+            margin: 0 auto;
+        }
+        .example-block:nth-child(odd) .plain-container {
+            flex-direction: row;
+        }
+        .example-block:nth-child(even) .plain-container {
+            flex-direction: row-reverse;
+        }
+        .plain-text { flex: 2; min-width: 250px; }
+        .plain-text h2 { font-size: 2rem; color: #d9a7ff; text-shadow: 0 0 10px #a150ff; margin-bottom: 1.5rem; font-weight: 600; }
+        .plain-text p { font-size: 1.15rem; line-height: 1.6; margin-bottom: 1rem; }
+
+        .plain-image { flex: 1; min-width: 250px; perspective: 1000px; cursor: pointer; }
+        .flip-card { width: 100%; height: 350px; perspective: 1000px; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 24px; }
+        .plain-image:hover .flip-card-inner { transform: rotateY(180deg); }
+        .flip-front, .flip-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 24px; overflow: hidden; }
+        .flip-front { background: rgba(60,30,110,0.6); display: flex; align-items: center; justify-content: center; }
+        .flip-front img { width: 100%; height: 100%; object-fit: cover; }
+        .flip-back { background: linear-gradient(135deg, #3a1a6e, #1a0a3e); transform: rotateY(180deg); display: flex; align-items: center; justify-content: center; padding: 1.5rem; border: 1px solid #b877ff; }
+        .flip-back span { font-size: 1.1rem; color: #e0aaff; text-align: center; }
+
+        .section-title {
+            text-align: center;
+            padding: 2rem 2rem 1rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            font-size: 2rem;
+        }
+
+        .subscribe-section {
+            background: rgba(20,10,40,0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 48px;
+            padding: 3rem 2rem;
+            margin: 3rem 2rem;
+            text-align: center;
+            border: 1px solid #b877ff;
+        }
+        .subscribe-form { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: 1.5rem; }
+        .subscribe-form input { padding: 0.8rem 1.5rem; border-radius: 60px; border: 1px solid #b877ff; background: rgba(0,0,0,0.5); color: white; font-size: 1rem; width: 280px; outline: none; font-family: inherit; }
+        .subscribe-form button { padding: 0.8rem 2rem; border-radius: 60px; background: #b877ff; color: #1a0a3e; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: inherit; font-weight: 600; }
+        .subscribe-form button:hover { background: #d48eff; box-shadow: 0 0 15px #b877ff; }
+        .notification { position: fixed; bottom: 20px; right: 20px; background: #b877ff; color: #1a0a3e; padding: 12px 24px; border-radius: 40px; font-weight: bold; z-index: 2000; animation: fadeOut 3s forwards; font-family: inherit; }
+        @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+        footer { text-align: center; padding: 2rem; color: #8f78b0; font-family: inherit; }
+
+        @media (max-width: 768px) {
+            .fact-container, .plain-container { flex-direction: column !important; text-align: center; padding: 1.5rem; }
+            .plain-text h2, .fact-container h2 { font-size: 1.5rem; }
+            .section-title { font-size: 1.6rem; }
+            .holo-text { font-size: 1.2rem; letter-spacing: 5px; }
+            .holo-sphere { width: 200px; height: 200px; }
+            .history-text h2 { font-size: 1.6rem; }
+            .flip-card { height: 280px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ГЛОБАЛЬНЫЕ ЛЕТАЮЩИЕ ЧАСТИЦЫ -->
+<div class="particles" id="particles"></div>
+
+<!-- ГОЛОГРАММА (полноэкранный блок, не фиксированный) -->
+<div class="hero">
+    <div class="holo-ring"></div>
+    <div class="holo-ring holo-ring2"></div>
+    <div class="holo-ring holo-ring3"></div>
+    <div class="holo-sphere"></div>
+    <div class="holo-text">✦ H O L O F A C T S ✦</div>
+    <h4>▼ ЛИСТАЙ ВНИЗ ▼</h4>
+</div>
+
+<!-- ОСНОВНОЙ КОНТЕНТ (просто под голограммой) -->
+<div class="content-block">
+    <div class="history-text">
+        <h2> Что такое голограмма?</h2>
+        <p><strong>Голограмма</strong> — это оптический клон объекта. В отличие от фотографии, она трёхмерна и меняет перспективу при взгляде с разных углов. Часто голограмму путают с 3D-изображением, но 3D объёмно только с одной точки обзора, а голограмма — с любой.</p>
+        <p>Первую голограмму создал венгерский физик <strong>Дэннис Габор</strong> в 1947 году в ходе эксперимента по повышению разрешающей способности электронного микроскопа. Настоящая голограмма рождается интерференцией двух лазерных лучей.</p>
+        <div class="plain-image" style="margin: 2rem auto 0; max-width: 400px;">
+            <div class="flip-card">
+                <div class="flip-card-inner">
+                    <div class="flip-front">
+                        <img src="2pic.jpeg" alt="Научная лаборатория">
+                    </div>
+                    <div class="flip-back">
+                        <span> Дэннис Габор — отец голографии</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section-title">
+    <h2> ИНТЕРЕСНЫЕ ФАКТЫ О ГОЛОГРАММАХ </h2>
+</div>
+
+<!-- ФАКТ 1 -->
+<div class="content-block">
+    <div class="fact-container">
+        <div class="plain-text">
+            <h2> Голограмма в кино, которую вы видели миллион раз</h2>
+            <p>Самая известная голограмма в истории кино — <strong>принцесса Лея из "Звёздных войн" (1977)</strong>. Создатели использовали технику с фольгой, изобретённую за 15 лет до этого. Современные художники, как Роберт Лонго, создают парящие 3D-изображения в музеях.</p>
+        </div>
+        <div class="plain-image">
+            <div class="flip-card"><div class="flip-card-inner"><div class="flip-front"><img src="leya.png" alt="Звёздные войны"></div><div class="flip-back"><span> "Помоги мне, Оби-Ван..."</span></div></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ФАКТ 2 -->
+<div class="content-block">
+    <div class="fact-container">
+        <div class="plain-text">
+            <h2> Голограмма, которую можно потрогать</h2>
+            <p>Учёные из <strong>Бристольского университета</strong> создали технологию осязаемых голограмм. Ультразвуковые динамики создают давление на кожу — вы чувствуете прикосновение к пустоте. Хирурги смогут "ощупывать" органы дистанционно.</p>
+        </div>
+        <div class="plain-image">
+            <div class="flip-card"><div class="flip-card-inner"><div class="flip-front"><img src="kjhgfd.png" alt="Осязание"></div><div class="flip-back"><span> Ultrahaptics — голограмма с обратной связью</span></div></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ФАКТ 3 -->
+<div class="content-block">
+    <div class="fact-container">
+        <div class="plain-text">
+            <h2> Кристалл, который хранит целую библиотеку</h2>
+            <p><strong>Голографическая память</strong> — кристалл размером с сахарный кубик вмещает до 1 терабайта данных (200 фильмов в HD). Лазер записывает информацию по всему объёму кристалла. Microsoft уже экспериментирует с такими носителями.</p>
+        </div>
+        <div class="plain-image">
+            <div class="flip-card"><div class="flip-card-inner"><div class="flip-front"><img src="okjhgf.png" alt="Кристалл"></div><div class="flip-back"><span> Кристалл памяти — данные навечно</span></div></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ФАКТ 4 -->
+<div class="content-block">
+    <div class="fact-container">
+        <div class="plain-text">
+            <h2> Врачи будущего смотрят сквозь пациента</h2>
+            <p>В медицине голограммы помогают планировать сложные операции. Хирург в AR-очках видит 3D-модель сердца или мозга, парящую над столом. В клинике Майо так готовятся к разделению сиамских близнецов.</p>
+        </div>
+        <div class="plain-image">
+            <div class="flip-card"><div class="flip-card-inner"><div class="flip-front"><img src="sdfghjm.jpg" alt="Хирургия"></div><div class="flip-back"><span> Голография в медицине — точность до миллиметра</span></div></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="section-title">
+    <h2> САМЫЕ ИНТЕРЕСНЫЕ ГОЛОГРАММЫ </h2>
+</div>
+
+<!-- ПРИМЕР 1 -->
+<div class="content-block example-block">
+    <div class="plain-container">
+        <div class="plain-image">
+            <div class="flip-card"><div class="flip-card-inner"><div class="flip-front"><img src="lkjhhnjmk.png" alt="Прикосновение к голограмме"></div><div class="flip-back"><span> Голограмма на ощупь — как наждачная бумага</span></div></div></div>
+        </div>
+        <div class="plain-text">
+            <h2> Интерактивная голограмма «Fairy Lights»</h2>
+            <p>Японские исследователи из Digital Nature Group создали голограмму, которую можно <strong>трогать</strong>. С помощью фемтосекундных лазеров они формируют 3D-воксели в воздухе. При прикосновении возникают ударные волны — на ощупь голограмма напоминает <strong>наждачную бумагу</strong>.</p>
+            <p>Технология безопасна для человека и открывает путь к тактильному взаимодействию с виртуальными объектами.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ПРИМЕР 2 -->
+<div class="content-block example-block">
+    <div class="plain-container">
+        <div class="plain-text">
+            <h2> Хацунэ Мику — виртуальная поп-звезда</h2>
+            <p>Анимированный персонаж-вокалоид, который даёт <strong>полномасштабные концерты</strong> с живыми музыкантами. Её голограмма проецируется на сцену, а песни синтезируются компьютером. Хацунэ Мику — самый популярный вокалоид в мире, её аудитория — миллионы фанатов.</p>
+            <p>Такие выступления стирают грань между реальным и цифровым искусством.</p>
+        </div>
+        <div class="plain-image">
+            <div class="flip-card"><div class="flip-card-inner"><div class="flip-front"><img src="4pic.png" alt="Концерт Хацунэ Мику"></div><div class="flip-back"><span> Живой концерт виртуальной певицы</span></div></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ПРИМЕР 3 -->
+<div class="content-block example-block">
+    <div class="plain-container">
+        <div class="plain-image">
+            <div class="flip-card"><div class="flip-card-inner"><div class="flip-front"><img src="5pic.png" alt="Лекция в университете"></div><div class="flip-back"><span> Голограмма вместо живого преподавателя</span></div></div></div>
+        </div>
+        <div class="plain-text">
+            <h2>Голограмма-лектор</h2>
+            <p>В Сан-Франциско можно посетить лекции, которые читают <strong>голограммы астронавта NASA Леланда Мелвина</strong> и рэпера Моса Дефа. Такие занятия привлекают внимание студентов и делают обучение интерактивным.</p>
+            <p>Технология позволяет приглашать в аудиторию «цифровых двойников» знаменитостей и экспертов из любой точки мира.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ПРИМЕР 4 -->
+<div class="content-block example-block">
+    <div class="plain-container">
+        <div class="plain-text">
+            <h2> Музей молока и глазированного сырка</h2>
+            <p>В Московской области, в рамках творческого проекта <strong>«Музей молока и молочного сырка РостАгроКомплекс (Б.Ю.Александров)»</strong>, появился интерактивный голографический экспонат. Проекция актёров рассказывает посетителям о пользе молочной продукции и погружает в крестьянский быт.</p>
+            <p>Голограмма позволяет транслировать запись бесконечно — актёры записывают историю один раз, а зрители могут смотреть её снова и снова. Кроме голограммы, в музее есть макет коровы в реальную величину и живые телята, которых можно потрогать.</p>
+        </div>
+        <div class="plain-image">
+            <div class="flip-card"><div class="flip-card-inner"><div class="flip-front"><img src="6pic.png" alt="Молочная ферма"></div><div class="flip-back"><span> Музей молока и глазированного сырка</span></div></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- ФОРМА ПОДПИСКИ -->
+<div class="subscribe-section">
+    <h3> Голографическая рассылка</h3>
+    <p>Получайте новые факты прямо на вашу голограмму</p>
+    <form class="subscribe-form" id="subscribeForm">
+        <input type="email" id="emailInput" placeholder="Ваш email" required>
+        <button type="submit">Подписаться</button>
+    </form>
+</div>
+<footer>✦ Голографическая платформа • Энергия фиолетового спектра • 2026 ✦<br>✦ Наведи на картинку — она перевернётся ✦</footer>
+
+<script>
+    // ---- ЧАСТИЦЫ (летающие шарики) ----
+    function createParticles() {
+        const container = document.getElementById('particles');
+        if (!container) return;
+        for (let i = 0; i < 70; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            const size = Math.random() * 8 + 3;
+            particle.style.width = size + 'px';
+            particle.style.height = size + 'px';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDuration = Math.random() * 5 + 3 + 's';
+            particle.style.animationDelay = Math.random() * 5 + 's';
+            container.appendChild(particle);
+        }
+    }
+    createParticles();
+
+    // ---- ФОРМА ПОДПИСКИ ----
+    const subscribeForm = document.getElementById('subscribeForm');
+    function showNotification(message) {
+        const notif = document.createElement('div');
+        notif.className = 'notification';
+        notif.innerText = message;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 3000);
+    }
+    subscribeForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('emailInput').value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(email)) {
+            showNotification(` Спасибо, ${email}! Вы подписаны на голографические новости `);
+            document.getElementById('emailInput').value = '';
+        } else {
+            showNotification('❌ Ошибка: введите корректный email');
+        }
+    });
+</script>
+</body>
+</html>
